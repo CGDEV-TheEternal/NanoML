@@ -374,16 +374,44 @@ std::shared_ptr<TensorPtr> TensorPtr::matmul(const std::shared_ptr<TensorPtr> &a
 		result.reserve(a->_shape[0] * b->_shape[1]);
 		for(size_t i=0;i<a->_shape[0];i++)
 		{
-			ans=0;
-			for(size_t j=0;j<a->_shape[1];j++)
+			for(size_t j=0;j<b->_shape[1];j++)
 			{
-				ans+=a->_data[i * a->_stride[0] + j * a->_stride[1]] * b->_data[j];
+				ans=0;
+				for(size_t k=0;k<a->_shape[1];k++)
+				{
+					ans+=a->_data[i * a->_stride[0] + k * a->_stride[1]] * b->_data[k * b->_stride[0] + j * b->_stride[1]];
+				}
+				result.push_back(ans);
 			}
-			result.push_back(ans);
 		}
 		std::shared_ptr<TensorPtr> ptr=std::shared_ptr<TensorPtr>(new TensorPtr(result));
 		ptr->_shape=std::vector<size_t>{a->_shape[0],b->_shape[1]};
 		ptr->_stride=std::vector<size_t>{b->_shape[1],1};
+		return ptr;
+	}
+	else
+	{
+		throw std::runtime_error("Not supported yet!");
+	}
+}
+
+std::shared_ptr<TensorPtr> TensorPtr::transpose(const std::shared_ptr<TensorPtr> &a)
+{
+	if(a->_shape.size()==0 || a->_shape.size()==1) return a;
+	else if(a->_shape.size()==2)
+	{
+		std::vector<dtype> result;
+		result.reserve(a->_data.size());
+		for(size_t i=0;i<a->_shape[1];i++)
+		{
+			for(size_t j=0;j<a->_shape[0];j++)
+			{
+				result.push_back(a->_data[j * a->_stride[0] + i * a->_stride[1]]);
+			}
+		}
+		std::shared_ptr<TensorPtr> ptr=std::shared_ptr<TensorPtr>(new TensorPtr(result));
+		ptr->_shape=std::vector<size_t>{a->_shape[1],a->_shape[0]};
+		ptr->_stride=std::vector<size_t>{a->_shape[0],1};
 		return ptr;
 	}
 	else
@@ -420,7 +448,7 @@ const std::vector<size_t> & Tensor::stride() const
 {
 	return ptr->_stride;
 }
-dtype Tensor::item() const
+dtype & Tensor::item() const
 {
 	if(ptr->_shape.size()!=0) throw std::invalid_argument("item() can be called only on 0D tensors!");
 	return ptr->_data[0]; 
@@ -430,14 +458,14 @@ size_t Tensor::numel() const
 	return ptr->_data.size();
 }
 
-dtype Tensor::operator()(size_t i) const
+dtype & Tensor::operator()(size_t i) const
 {
 	if(ptr->_shape.size()==0) throw std::invalid_argument("Use item() for 0D tensors!");
 	else if(ptr->_shape.size()>=2) throw std::invalid_argument("Invalid index given!");
 	if(i>=ptr->_data.size()) throw std::out_of_range("Index out of range!");
 	return ptr->_data[i];
 }
-dtype Tensor::operator()(size_t i,size_t j) const
+dtype & Tensor::operator()(size_t i,size_t j) const
 {
 	if(ptr->_shape.size()==0) throw std::invalid_argument("Use item() for 0D tensors!");
 	else if(ptr->_shape.size()!=2) throw std::invalid_argument("Invalid index given!");
@@ -466,6 +494,12 @@ Tensor Tensor::matmul(const Tensor &other)
 {
 	Tensor result;
 	result.ptr=TensorPtr::matmul(ptr,other.ptr);
+	return result;
+}
+Tensor Tensor::T()
+{
+	Tensor result;
+	result.ptr=TensorPtr::transpose(ptr);
 	return result;
 }
 std::ostream & operator<<(std::ostream &os,const Tensor &tensor)
@@ -505,10 +539,9 @@ std::ostream & operator<<(std::ostream &os,const Tensor &tensor)
 
 
 int main(){
-	std::vector<std::vector<float>> vec1={{5},{7},{9}};
-	std::vector<std::vector<float>> vec2={{4,6,8},{5,7,9}};
+	std::vector<std::vector<float>> vec1={{1,2,3},{4,5,6}};
+	std::vector<std::vector<float>> vec2={{7,8},{9,10},{11,12}};
 	Tensor a(vec1);
 	Tensor b(vec2);
-	Tensor c=b.matmul(a);
-	std::cout<<c.shape()<< " "<<c.stride();
+
 }

@@ -16,6 +16,7 @@ class TensorPtr
 		static std::shared_ptr<TensorPtr> dot(const std::shared_ptr<TensorPtr> &a,const std::shared_ptr<TensorPtr> &b);
 		static std::shared_ptr<TensorPtr> elementwise_mul(const std::shared_ptr<TensorPtr> &a,const std::shared_ptr<TensorPtr> &b);
 		static std::shared_ptr<TensorPtr> matmul(const std::shared_ptr<TensorPtr> &a,const std::shared_ptr<TensorPtr> &b);
+		static std::shared_ptr<TensorPtr> transpose(const std::shared_ptr<TensorPtr> &a);
 		friend class Tensor;
 };
 class Tensor
@@ -31,14 +32,15 @@ class Tensor
 		
 		const std::vector<size_t> &shape() const;
 		const std::vector<size_t> &stride() const;
-		dtype item() const;
+		dtype &item() const;
 		size_t numel() const;
 		
-		dtype operator()(size_t i) const;
-		dtype operator()(size_t i,size_t j) const;
+		dtype & operator()(size_t i) const;
+		dtype & operator()(size_t i,size_t j) const;
 		Tensor operator+(const Tensor &other);
 		Tensor dot(const Tensor &other);
 		Tensor operator*(const Tensor &other);
 		Tensor matmul(const Tensor &other);
+		Tensor T();
 		friend std::ostream & operator<<(std::ostream &os,const Tensor &tensor);
 };
