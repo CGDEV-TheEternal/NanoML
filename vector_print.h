@@ -2,7 +2,8 @@
 #include <ostream>
 #include <vector>
 
-inline std::ostream & operator<<(std::ostream &os,const std::vector<float> &vec)
+template<typename T>
+inline std::ostream & operator<<(std::ostream &os,const std::vector<T> &vec)
 {
 	os<<"{";
 	for(int i=0;i<vec.size();i++)
